@@ -1,0 +1,175 @@
+services:
+  service_name:
+    # === Basic Configuration ===
+    image: image_name:tag                # Specify the image to use
+    container_name: container_name       # Custom container name (optional but recommended)
+    
+    # === Build Configuration ===
+    build:
+      context: ./path_to_build_context   # Build context directory
+      dockerfile: Dockerfile             # Custom Dockerfile name
+      args:                              # Build-time arguments
+        ARG_NAME: value
+      target: build_stage                # Specific build stage to target
+    
+    # === Startup Configuration ===
+    command: ["command", "arg1", "arg2"] # Override default command
+    entrypoint: ["/entrypoint.sh"]       # Override default entrypoint
+    
+    # === Environment Variables ===
+    environment:                         # Environment variables as key-value pairs
+      - KEY=value
+      - ANOTHER_KEY=another_value
+    env_file:                            # Load environment variables from files
+      - ./.env
+      - ./another.env
+    
+    # === Resource Configuration ===
+    volumes:                             # Mount host paths or named volumes
+      - ./host_path:/container_path:ro   # Read-only bind mount
+      - named_volume:/container_path     # Named volume mount
+      - type: bind                       # Long syntax for bind mount
+        source: ./host_path
+        target: /container_path
+        read_only: true
+    
+    # === Resource Limits ===
+    ulimit:                              # Set container ulimits
+      nofile:
+        soft: 65536
+        hard: 65536
+    
+    # === Network Configuration ===
+    ports:                               # Expose ports to the host
+      - "host_port:container_port"       # Standard port mapping
+      - "127.0.0.1:host_port:container_port" # Bind to specific interface
+    expose:                              # Expose ports to linked services
+      - "container_port"
+    networks:                            # Connect to networks
+      - frontend_network                 # Simple network connection
+      - backend_network
+      - network_name:                    # Network with aliases
+          aliases:
+            - alias1
+            - alias2
+    
+    # === Dependency and Startup Conditions ===
+    depends_on:                          # Service dependencies
+      service_dependency:
+        condition: service_healthy       # Wait until dependency is healthy
+    
+    # === Availability Configuration ===
+    restart: unless-stopped              # Restart policy
+    healthcheck:                         # Health check configuration
+      test: ["CMD", "curl", "-f", "http://localhost:port/health"]
+      interval: 30s                      # Time between checks
+      timeout: 10s                       # Time to wait for response
+      retries: 3                         # Number of retries before failing
+      start_period: 40s                  # Initial startup time before first check
+    
+    # === Deployment Configuration (Swarm) ===
+    deploy:                              # Swarm deployment settings
+      replicas: 3                        # Number of replicas
+      resources:                         # Resource constraints
+        limits:
+          cpus: '0.50'                   # CPU limit
+          memory: 512M                   # Memory limit
+        reservations:
+          cpus: '0.25'                   # Reserved CPUs
+          memory: 256M                   # Reserved memory
+      update_config:                     # Update strategy
+        parallelism: 2                   # How many containers to update at once
+        delay: 10s                       # Delay between updates
+      restart_policy:                    # Restart policy for swarm
+        condition: on-failure
+      placement:                         # Placement constraints
+        constraints:
+          - node.role == worker
+    
+    # === Logging Configuration ===
+    logging:                             # Logging driver and options
+      driver: "json-file"                # Log driver to use
+      options:
+        max-size: "10m"                  # Maximum log file size
+        max-file: "3"                    # Number of log files to retain
+    
+    # === Metadata ===
+    labels:                              # Container labels
+      com.example.description: "Description label"
+      com.example.environment: "production"
+    
+    # === Permissions and Security Configuration ===
+    user: username:group                 # User:group to run as
+    working_dir: /path/to/working/directory # Working directory inside container
+    cap_add:                             # Add Linux capabilities
+      - SYS_PTRACE
+    cap_drop:                            # Drop Linux capabilities
+      - NET_ADMIN
+    security_opt:                        # Security options
+      - no-new-privileges:true
+    
+    # === Additional cgroup and Resource Configuration ===
+    sysctls:                             # Kernel parameters to set
+      net.core.somaxconn: 1024
+    shm_size: '2gb'                      # Size of /dev/shm
+    
+    # === Additional Configuration ===
+    dns:                                 # Custom DNS servers
+      - 8.8.8.8
+      - 8.8.4.4
+    dns_search:                          # DNS search domains
+      - example.com
+    stop_grace_period: 30s               # Time to wait before force killing
+    tmpfs:                               # Mount tmpfs directories
+      - /tmp
+      - /run
+    extra_hosts:                         # Add hostnames to /etc/hosts
+      - "host.docker.internal:host-gateway" # Special entry for host access
+      - "somehost:162.242.195.82"
+    init: true                           # Run an init process in container
+    privileged: false                    # Grant extended privileges
+    read_only: false                     # Mount root filesystem as read-only
+
+# === Network Definitions ===
+networks:
+  frontend_network:                      # Custom bridge network
+    driver: bridge                       # Network driver
+    driver_opts:                         # Driver-specific options
+      com.docker.network.bridge.name: frontend
+    ipam:                                # IP address management
+      driver: default
+      config:
+        - subnet: 172.16.238.0/24
+          gateway: 172.16.238.1
+    labels:                              # Network labels
+      com.example.description: "Frontend network"
+  
+  backend_network:                       # Internal network for backend services
+    driver: bridge
+    internal: true                       # No external connectivity
+    attachable: true                     # Can be attached to by containers
+    enable_ipv6: false                   # Disable IPv6
+    labels:
+      com.example.description: "Backend network"
+  
+  external_network:                      # Reference to pre-existing network
+    external: true                       # Use external network
+    name: actual_network_name            # Name of external network
+
+# === Volume Definitions ===
+volumes:
+  named_volume:                          # Local named volume
+    driver: local                        # Volume driver
+    driver_opts:                         # Driver-specific options
+      type: none
+      o: bind
+      device: /path/on/host
+    labels:                              # Volume labels
+      com.example.description: "Example volume"
+  
+  backup_volume:                         # Simple volume definition
+    driver: local
+    
+  external_volume:                       # Reference to pre-existing volume
+    external: true                       # Use external volume
+    name: actual_volume_name             # Name of external volume
