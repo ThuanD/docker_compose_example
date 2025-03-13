@@ -1,0 +1,75 @@
+x-redis-common: &redis-base
+  image: ${REDIS_IMAGE:-redis:7.2-alpine}
+  command: redis-server /usr/local/etc/redis/redis.conf
+  volumes:
+    - ./redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
+  networks:
+    - redis-net
+  deploy:
+    resources:
+      limits:
+        cpus: '0.5'
+        memory: 500M
+      reservations:
+        cpus: '0.25'
+        memory: 250M
+  security_opt:
+    - no-new-privileges:true
+  healthcheck:
+    test: ["CMD", "redis-cli", "ping"]
+    interval: 10s
+    timeout: 5s
+    retries: 5
+  logging:
+    driver: "json-file"
+    options:
+      max-size: "10m"
+      max-file: "3"
+      compress: "true"
+
+services:
+  redis-1:
+    <<: *redis-base
+    container_name: ${REDIS_CONTAINER_PREFIX:-redis}-1
+    ports:
+      - "${REDIS_PORT_1:-6379}:6379"
+      - "${REDIS_CLUSTER_PORT_1:-16379}:16379"
+    volumes:
+      - ./redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
+      - redis_data_1:/data
+
+  redis-2:
+    <<: *redis-base
+    container_name: ${REDIS_CONTAINER_PREFIX:-redis}-2
+    ports:
+      - "${REDIS_PORT_2:-6380}:6379"
+      - "${REDIS_CLUSTER_PORT_2:-16380}:16379"
+    volumes:
+      - ./redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
+      - redis_data_2:/data
+
+  redis-3:
+    <<: *redis-base
+    container_name: ${REDIS_CONTAINER_PREFIX:-redis}-3
+    ports:
+      - "${REDIS_PORT_3:-6381}:6379"
+      - "${REDIS_CLUSTER_PORT_3:-16381}:16379"
+    volumes:
+      - ./redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
+      - redis_data_3:/data
+
+networks:
+  redis-net:
+    driver: bridge
+    internal: true
+
+volumes:
+  redis_data_1:
+  redis_data_2:
+  redis_data_3:
+  backup:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /tmp/backup
