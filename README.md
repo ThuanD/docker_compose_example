@@ -26,6 +26,7 @@ Currently, the repository includes examples for the following tech stacks:
 
 * **[SonarQube and PostgreSQL](sonarqube/)**: SonarQube setup with PostgreSQL for code analysis and quality management.
 * **[Prometheus and Grafana](prometheus-grafana/)**: Monitoring stack with Prometheus for metrics collection and Grafana for visualization.
+* **[Redis Cluster](redis-cluster/):** Example setup for a Redis Cluster, demonstrating how to configure and manage a distributed Redis environment for high availability and scalability.
 
 **More tech stacks will be added in the future.** We aim to expand this list to include various programming languages, frameworks, databases, and other popular technologies.
 
