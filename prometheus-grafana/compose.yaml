@@ -12,17 +12,21 @@ services:
     networks:
       - monitoring-network
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "http://localhost:9090/-/healthy"]
-      interval: 30s
+      interval: 15s
       timeout: 10s
       retries: 3
-      start_period: 30s
+      start_period: 60s
     logging:
       driver: "json-file"
       options:
         max-size: "10m"
         max-file: "3"
+        compress: "true"
 
   grafana:
     image: ${GRAFANA_IMAGE:-grafana/grafana:latest}
@@ -38,6 +42,10 @@ services:
       - ${GRAFANA_PORT:-3000}:3000
     networks:
       - monitoring-network
+      - public-network
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
     depends_on:
       prometheus:
         condition: service_healthy
@@ -53,9 +61,13 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
+        compress: "true"
 
 networks:
   monitoring-network:
+    driver: bridge
+    internal: true
+  public-network:
     driver: bridge
 
 volumes:
@@ -63,3 +75,9 @@ volumes:
     driver: local
   grafana_data:
     driver: local
+  backup:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /tmp/backup
