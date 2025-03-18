@@ -1,0 +1,136 @@
+services:
+  elasticsearch:
+    image: ${ES_IMAGE:-elasticsearch:8.17.3}
+    container_name: ${ES_CONTAINER_NAME:-es}
+    environment:
+      - discovery.type=single-node
+      - ES_JAVA_OPTS=${ES_JAVA_OPTS:--Xms512m -Xmx512m}
+      - xpack.security.enabled=${ES_SECURITY_ENABLED:-false}
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    ports:
+      - "${ES_PORT:-9200}:9200"
+      - "${ES_TRANSPORT_PORT:-9300}:9300"
+    networks:
+      - elasticnet
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+    healthcheck:
+      test: ["CMD-SHELL", "curl --silent --fail localhost:9200/_cluster/health || exit 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+        compress: "true"
+
+  logstash:
+    image: ${LOGSTASH_IMAGE:-logstash:8.17.3}
+    container_name: ${LOGSTASH_CONTAINER_NAME:-log}
+    environment:
+      - discovery.seed_hosts=logstash
+      - LS_JAVA_OPTS=${LS_JAVA_OPTS:--Xms512m -Xmx512m}
+    volumes:
+      - ./logstash/pipeline:/usr/share/logstash/pipeline
+      - ./logstash/data:/usr/share/logstash/data
+      - ./logstash/nginx.log:/home/nginx.log
+    ports:
+      - "${LOGSTASH_TCP_PORT:-5000}:5000/tcp"
+      - "${LOGSTASH_UDP_PORT:-5000}:5000/udp"
+      - "${LOGSTASH_BEATS_PORT:-5044}:5044"
+      - "${LOGSTASH_API_PORT:-9600}:9600"
+    networks:
+      - elasticnet
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    depends_on:
+      - elasticsearch
+    command: logstash -f /usr/share/logstash/pipeline/logstash-nginx.config
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl --silent --fail localhost:9600 || exit 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+        compress: "true"
+
+  kibana:
+    image: ${KIBANA_IMAGE:-kibana:8.17.3}
+    container_name: ${KIBANA_CONTAINER_NAME:-kib}
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    volumes:
+      - kibana_data:/usr/share/kibana/data
+    ports:
+      - "${KIBANA_PORT:-5601}:5601"
+    networks:
+      - elasticnet
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 1G
+        reservations:
+          cpus: '0.25'
+          memory: 512M
+    depends_on:
+      - elasticsearch
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl --silent --fail localhost:5601/api/status || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+        compress: "true"
+
+networks:
+  elasticnet:
+    driver: bridge
+
+volumes:
+  elasticsearch_data:
+  kibana_data:
+  backup:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /tmp/backup
