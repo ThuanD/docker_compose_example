@@ -1,0 +1,45 @@
+services:
+  jenkins:
+    image: ${JENKINS_IMAGE:-jenkins/jenkins:lts}
+    container_name: ${JENKINS_CONTAINER_NAME:-jenkins}
+    environment:
+      - JENKINS_OPTS="--prefix=${JENKINS_PREFIX:-/}"
+      - JENKINS_JAVA_OPTS=${JENKINS_JAVA_OPTS:--Xms512m -Xmx1024m -Duser.timezone=UTC}
+    volumes:
+      - jenkins_home:/var/jenkins_home
+      - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+      - "${JENKINS_PORT:-8080}:8080"
+      - "${JENKINS_AGENT_PORT:-50000}:50000"
+    networks:
+      - jenkins_network
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          cpus: '1'
+          memory: 1G
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s http://localhost:8080/login || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+        compress: "true"
+
+networks:
+  jenkins_network:
+    driver: bridge
+
+volumes:
+  jenkins_home:
