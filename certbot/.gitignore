@@ -1,0 +1,13 @@
+nginx/conf.d/*.conf
+
+init-letsencrypt.sh
+.env
+
+# Certificates and keys
+certbot/
+
+# Temporary files
+*.bak
+
+# Static file
+static/

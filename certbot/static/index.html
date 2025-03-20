@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SSL Test Page</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #f0f2f5;
+        }
+        .container {
+            max-width: 800px;
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #1a73e8;
+            margin-bottom: 20px;
+        }
+        .status {
+            padding: 15px;
+            border-radius: 4px;
+            margin: 20px 0;
+        }
+        .secure {
+            background-color: #e6f4ea;
+            color: #137333;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>SSL Test Page</h1>
+        <div class="status secure">
+            <h2>Connection Status:</h2>
+            <p>If you're seeing this page over HTTPS, your SSL certificate is working correctly!</p>
+        </div>
+        <div>
+            <h2>Server Information:</h2>
+            <ul>
+                <li>Server: Nginx</li>
+                <li>SSL Provider: Let's Encrypt</li>
+                <li>Auto-renewal: Enabled</li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>

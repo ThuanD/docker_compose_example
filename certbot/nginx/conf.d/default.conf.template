@@ -1,0 +1,54 @@
+server {
+    listen 80;
+    listen [::]:80;
+    server_name test.example www.test.example;
+    server_tokens off;
+
+    # Health check endpoint for monitoring
+    location /health {
+        access_log off;
+        return 200 'OK';
+    }
+
+    # ACME challenge location for Let's Encrypt verification
+    location /.well-known/acme-challenge/ {
+        root /var/www/certbot;
+    }
+
+    location / {
+        # Only redirect to HTTPS if certificate exists
+        # This prevents redirect loops during initial certificate acquisition
+        if (-f /etc/letsencrypt/live/test.example/fullchain.pem) {
+            return 301 https://$host$request_uri;
+        }
+
+        # If no certificate exists yet, serve from static directory
+        root /usr/share/nginx/html;
+        index index.html index.htm;
+    }
+}
+
+# HTTPS server configuration
+server {
+    listen 443 ssl;
+    listen [::]:443 ssl;
+    server_name test.example www.test.example;
+    server_tokens off;
+
+    # SSL certificate configuration
+    ssl_certificate_key /etc/letsencrypt/live/test.example/privkey.pem;
+    ssl_certificate /etc/letsencrypt/live/test.example/fullchain.pem;
+
+    # Include SSL configuration files
+    include /etc/letsencrypt/options-ssl-nginx.conf;
+    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
+
+    location / {
+        root /usr/share/nginx/html;
+        index index.html index.htm;
+    }
+
+    # Handle SSL errors by redirecting to HTTP
+    # This helps during initial setup and certificate renewal
+    error_page 497 301 =307 http://$host$request_uri;
+} 

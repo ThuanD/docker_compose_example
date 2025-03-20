@@ -1,0 +1,83 @@
+#!/bin/bash
+
+# Email and domains configuration
+email="your-email@test.example"  # Change this email
+domains=(test.example www.test.example)  # Change these domains
+rsa_key_size=4096
+env=develop # Set to staging or production if you want to use Let's Encrypt's environment
+
+
+# Create required directory structure
+mkdir -p ./certbot/conf/live/test.example
+mkdir -p ./certbot/www
+
+# Create temporary self-signed certificate
+# This allows Nginx to start before we have the real certificates
+openssl req -x509 -nodes -newkey rsa:$rsa_key_size -days 1 \
+  -keyout ./certbot/conf/live/test.example/privkey.pem \
+  -out ./certbot/conf/live/test.example/fullchain.pem \
+  -subj '/CN=localhost'
+
+# Create directory for ACME challenge
+mkdir -p ./certbot/www/.well-known/acme-challenge
+
+# Generate Diffie-Hellman parameters
+openssl dhparam -out ./certbot/conf/ssl-dhparams.pem 2048
+
+# Create SSL configuration for Nginx
+# These are recommended SSL settings from Mozilla
+cat > ./certbot/conf/options-ssl-nginx.conf << "EOF"
+ssl_session_cache shared:le_nginx_SSL:10m;
+ssl_session_timeout 1440m;
+ssl_session_tickets off;
+ssl_protocols TLSv1.2 TLSv1.3;
+ssl_prefer_server_ciphers off;
+ssl_ciphers "ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384";
+EOF
+
+echo "### Starting nginx..."
+docker compose up -d nginx
+echo "### Waiting for nginx to start..."
+sleep 5
+
+# Test nginx configuration
+echo "Testing Nginx configuration..."
+docker compose exec nginx nginx -t
+
+# Test ACME challenge access
+echo "Testing ACME challenge access..."
+curl -I http://${domains[0]}/.well-known/acme-challenge/test
+
+# Use temporary self-signed certificate only
+if [ $env != "staging" || $env != "production"]; then
+  echo "### Done! Configuration is ready."
+  echo "### You can add your domain to /etc/hosts:"
+  echo "$ sudo tee -a /etc/hosts <<< '127.0.0.1 test.example'"
+  echo "$ sudo tee -a /etc/hosts <<< '127.0.0.1 www.test.example'"
+  exit 0
+fi
+
+# Request Let's Encrypt certificate
+staging_arg=""
+if [ $env == "staging" ]; then
+  staging_arg="--staging"
+fi
+
+# Build domain arguments for certbot command
+domain_args=""
+for domain in "${domains[@]}"; do
+  domain_args="$domain_args -d $domain"
+done
+
+echo "### Requesting Let's Encrypt certificate..."
+docker compose run --rm certbot certonly --webroot -w /var/www/certbot \
+  $staging_arg \
+  --email $email \
+  --agree-tos \
+  --no-eff-email \
+  $domain_args
+
+echo "### Reloading nginx..."
+docker compose exec nginx nginx -s reload
+
+echo "### Done! Configuration is ready."
