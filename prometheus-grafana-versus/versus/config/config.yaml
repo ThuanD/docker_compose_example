@@ -1,0 +1,16 @@
+name: versus
+host: 0.0.0.0
+port: 8080
+
+alert:
+  slack:
+    enable: true
+    token: ${SLACK_TOKEN}
+    channel_id: ${SLACK_CHANNEL_ID}
+    template_path: "/app/config/slack_message.tmpl"
+
+  telegram:
+    enable: true
+    bot_token: ${TELEGRAM_BOT_TOKEN}
+    chat_id: ${TELEGRAM_CHAT_ID}
+    template_path: "/app/config/telegram_message.tmpl"

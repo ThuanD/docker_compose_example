@@ -1,0 +1,9 @@
+🚨 *Grafana Alert: {{.alerts.[0].labels.alertname}}*
+
+**Message**: {{.message}}
+**Status**: {{.status}}
+**Instance**: {{.alerts.[0].labels.instance}}
+**Severity**: {{.alerts.[0].labels.severity}}
+**Grafana URL**: <{{.alerts.[0].generatorURL}}|View in Grafana>
+
+Please investigate this issue.

@@ -1,0 +1,9 @@
+🚨 <b>Grafana Alert: {{.alerts.[0].labels.alertname}}</b>
+
+<b>Message</b>: {{.message}}
+<b>Status</b>: {{.status}}
+<b>Instance</b>: {{.alerts.[0].labels.instance}}
+<b>Severity</b>: {{.alerts.[0].labels.severity}}
+<b>Grafana URL</b>: <a href="{{.alerts.[0].generatorURL}}">View in Grafana</a>
+
+Please investigate this issue.
