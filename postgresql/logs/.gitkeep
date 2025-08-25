@@ -1,0 +1,2 @@
+# This directory stores PostgreSQL log files
+# Logs are automatically rotated and managed by PostgreSQL

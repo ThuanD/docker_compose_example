@@ -1,0 +1,163 @@
+services:
+  mysql:
+    image: ${MYSQL_IMAGE:-mysql:8.0}
+    container_name: ${MYSQL_CONTAINER_NAME:-mysql}
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD:-rootpassword}
+      - MYSQL_DATABASE=${MYSQL_DATABASE:-mydatabase}
+      - MYSQL_USER=${MYSQL_USER:-myuser}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD:-mypassword}
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - mysql_config:/etc/mysql/conf.d
+      - ./init:/docker-entrypoint-initdb.d:ro
+      - ./config/my.cnf:/etc/mysql/conf.d/custom.cnf:ro
+      - ./logs:/var/log/mysql
+    ports:
+      - "${MYSQL_PORT:-3306}:3306"
+    networks:
+      - mysql_network
+    command: >
+      mysqld
+      --default-authentication-plugin=mysql_native_password
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_unicode_ci
+      --log-error=/var/log/mysql/error.log
+      --slow-query-log=1
+      --slow-query-log-file=/var/log/mysql/slow.log
+      --long_query_time=2
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD:-rootpassword}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+        compress: "true"
+
+  phpmyadmin:
+    image: ${PHPMYADMIN_IMAGE:-phpmyadmin:latest}
+    container_name: ${PHPMYADMIN_CONTAINER_NAME:-phpmyadmin}
+    environment:
+      - PMA_HOST=mysql
+      - PMA_PORT=3306
+      - PMA_USER=${MYSQL_USER:-myuser}
+      - PMA_PASSWORD=${MYSQL_PASSWORD:-mypassword}
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD:-rootpassword}
+      - PMA_ARBITRARY=${PMA_ARBITRARY:-0}
+      - UPLOAD_LIMIT=${UPLOAD_LIMIT:-256M}
+      - MEMORY_LIMIT=${MEMORY_LIMIT:-512M}
+    volumes:
+      - phpmyadmin_data:/var/lib/phpmyadmin
+      - ./phpmyadmin/config.user.inc.php:/etc/phpmyadmin/config.user.inc.php:ro
+    ports:
+      - "${PHPMYADMIN_PORT:-8080}:80"
+    networks:
+      - mysql_network
+      - public_network
+    depends_on:
+      mysql:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+        compress: "true"
+
+  mysql-backup:
+    image: ${MYSQL_IMAGE:-mysql:8.0}
+    container_name: ${MYSQL_BACKUP_CONTAINER_NAME:-mysql-backup}
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD:-rootpassword}
+      - MYSQL_DATABASE=${MYSQL_DATABASE:-mydatabase}
+      - MYSQL_USER=${MYSQL_USER:-myuser}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD:-mypassword}
+      - MYSQL_HOST=mysql
+      - MYSQL_PORT=3306
+      - BACKUP_SCHEDULE=${BACKUP_SCHEDULE:-0 2 * * *}
+    volumes:
+      - ./backups:/backups
+      - ./scripts:/scripts:ro
+    networks:
+      - mysql_network
+    depends_on:
+      mysql:
+        condition: service_healthy
+    command: >
+      sh -c "
+      apt-get update && apt-get install -y cron &&
+      echo '${BACKUP_SCHEDULE:-0 2 * * *} /scripts/backup.sh' > /etc/cron.d/mysql-backup &&
+      chmod 0644 /etc/cron.d/mysql-backup &&
+      crontab /etc/cron.d/mysql-backup &&
+      cron -f"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.2'
+          memory: 256M
+        reservations:
+          cpus: '0.1'
+          memory: 128M
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "2"
+        compress: "true"
+
+networks:
+  mysql_network:
+    driver: bridge
+    internal: true
+  public_network:
+    driver: bridge
+
+volumes:
+  mysql_data:
+    driver: local
+  mysql_config:
+    driver: local
+  phpmyadmin_data:
+    driver: local
+  backup:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /tmp/backup

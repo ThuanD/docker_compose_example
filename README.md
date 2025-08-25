@@ -24,9 +24,37 @@ The goal of this repository is to offer practical and easy-to-follow guidance fo
 
 Currently, the repository includes examples for the following tech stacks:
 
+### **Databases**
+* **[PostgreSQL with PgAdmin](postgresql/)**: Complete PostgreSQL database setup with PgAdmin web interface and automated backup functionality.
+* **[MongoDB with Mongo Express](mongodb/)**: NoSQL document database with web-based admin interface and automated backup.
+* **[MySQL with phpMyAdmin](mysql/)**: Popular relational database with web interface and backup automation.
+
+### **Message Queues & Streaming**
+* **[Apache Kafka](kafka/)**: Kafka messaging system with Zookeeper and Kafka UI for stream processing and real-time data pipelines.
+* **[RabbitMQ with Management UI](rabbitmq/)**: Message broker with management interface and Prometheus metrics export.
+
+### **Caching & Storage**
+* **[Redis Cluster](redis-cluster/)**: Example setup for a Redis Cluster, demonstrating how to configure and manage a distributed Redis environment for high availability and scalability.
+* **[Minio S3 Object Storage](minio/)**: S3-compatible object storage with web console and bucket management.
+
+### **Monitoring & Observability**
+* **[Prometheus, Grafana and Versus](prometheus-grafana-versus/)**: Monitoring stack with Prometheus for metrics collection, Grafana for visualization, and Versus for incident management.
+* **[InfluxDB + Grafana + Telegraf](influxdb-grafana/)**: Time series database stack for IoT and metrics data with data collection agent.
+* **[ELK Stack](elasticsearch-logstash-kibana/)**: Elasticsearch, Logstash, and Kibana for centralized logging, log processing, and data visualization.
+
+### **Development & CI/CD**
 * **[SonarQube and PostgreSQL](sonarqube/)**: SonarQube setup with PostgreSQL for code analysis and quality management.
-* **[Prometheus and Grafana](prometheus-grafana/)**: Monitoring stack with Prometheus for metrics collection and Grafana for visualization.
-* **[Redis Cluster](redis-cluster/):** Example setup for a Redis Cluster, demonstrating how to configure and manage a distributed Redis environment for high availability and scalability.
+* **[Jenkins CI/CD](jenkins/)**: Jenkins setup for continuous integration and continuous deployment pipelines.
+
+### **Web & Content Management**
+* **[WordPress with MySQL](wordpress/)**: Complete WordPress CMS setup with MySQL database and phpMyAdmin interface.
+* **[Nginx with Certbot](certbot/)**: Nginx web server with automated SSL certificate generation and renewal using Let's Encrypt Certbot.
+
+### **Reverse Proxy & Load Balancing**
+* **[Traefik Reverse Proxy](traefik/)**: Modern reverse proxy with automatic service discovery, SSL termination, and dashboard.
+
+### **Identity & Access Management**
+* **[Keycloak Identity Management](keycloak/)**: Open-source identity and access management with PostgreSQL backend.
 
 **More tech stacks will be added in the future.** We aim to expand this list to include various programming languages, frameworks, databases, and other popular technologies.
 

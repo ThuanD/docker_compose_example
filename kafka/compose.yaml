@@ -69,9 +69,8 @@ services:
           cpus: '0.5'
           memory: 512M
     depends_on:
-      - zookeeper
-#      zookeeper:
-#        condition: service_healthy
+      zookeeper:
+        condition: service_healthy
     restart: unless-stopped
     healthcheck:
       test: kafka-topics.sh --bootstrap-server localhost:9092 --list || exit 1
@@ -100,9 +99,8 @@ services:
     networks:
       - kafka_network
     depends_on:
-      - kafka
-#      kafka:
-#        condition: service_healthy
+      kafka:
+        condition: service_healthy
     deploy:
       resources:
         limits:

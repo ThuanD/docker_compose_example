@@ -1,0 +1,97 @@
+services:
+  traefik:
+    image: ${TRAEFIK_IMAGE:-traefik:latest}
+    container_name: ${TRAEFIK_CONTAINER_NAME:-traefik}
+    environment:
+      - TRAEFIK_API_DASHBOARD=${TRAEFIK_DASHBOARD:-true}
+      - TRAEFIK_API_INSECURE=${TRAEFIK_API_INSECURE:-true}
+      - TRAEFIK_PROVIDERS_DOCKER=${TRAEFIK_DOCKER_PROVIDER:-true}
+      - TRAEFIK_PROVIDERS_DOCKER_EXPOSEDBYDEFAULT=${TRAEFIK_EXPOSED_BY_DEFAULT:-false}
+      - TRAEFIK_ENTRYPOINTS_WEB_ADDRESS=:80
+      - TRAEFIK_ENTRYPOINTS_WEBSECURE_ADDRESS=:443
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - traefik_data:/data
+      - ./config:/etc/traefik:ro
+      - ./certificates:/certificates
+    ports:
+      - "${TRAEFIK_HTTP_PORT:-80}:80"
+      - "${TRAEFIK_HTTPS_PORT:-443}:443"
+      - "${TRAEFIK_DASHBOARD_PORT:-8080}:8080"
+    networks:
+      - traefik_network
+      - public_network
+    command:
+      - --api.dashboard=true
+      - --api.insecure=true
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --entrypoints.web.address=:80
+      - --entrypoints.websecure.address=:443
+      - --certificatesresolvers.letsencrypt.acme.tlschallenge=true
+      - --certificatesresolvers.letsencrypt.acme.email=${ACME_EMAIL:-admin@example.com}
+      - --certificatesresolvers.letsencrypt.acme.storage=/data/acme.json
+      - --log.level=${TRAEFIK_LOG_LEVEL:-INFO}
+      - --accesslog=true
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+        compress: "true"
+
+  whoami:
+    image: ${WHOAMI_IMAGE:-traefik/whoami:latest}
+    container_name: ${WHOAMI_CONTAINER_NAME:-whoami}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.whoami.rule=Host(`whoami.localhost`)"
+      - "traefik.http.routers.whoami.entrypoints=web"
+      - "traefik.http.services.whoami.loadbalancer.server.port=80"
+    networks:
+      - traefik_network
+    deploy:
+      resources:
+        limits:
+          cpus: '0.1'
+          memory: 128M
+        reservations:
+          cpus: '0.05'
+          memory: 64M
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "2"
+        compress: "true"
+
+networks:
+  traefik_network:
+    driver: bridge
+  public_network:
+    driver: bridge
+    external: true
+
+volumes:
+  traefik_data:
+    driver: local

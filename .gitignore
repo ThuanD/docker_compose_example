@@ -30,4 +30,33 @@ Thumbs.db
 .env
 
 # Ignore logstash data
-elasticsearch-logstash-kibana/logstash/data
+elasticsearch-logstash-kibana/logstash/data/*
+!elasticsearch-logstash-kibana/logstash/data/.gitkeep
+
+# Ignore certificate data
+certbot/conf/*
+certbot/www/*
+
+# Ignore Jenkins home
+jenkins_home/
+
+# Ignore backup directories
+backup/
+
+# Ignore temporary files
+*.tmp
+*.temp
+*.swp
+*.swo
+
+# Ignore Redis cluster nodes configuration
+redis-cluster/nodes-*.conf
+
+# Ignore PostgreSQL data and logs
+postgresql/backups/*
+!postgresql/backups/.gitkeep
+postgresql/logs/*
+!postgresql/logs/.gitkeep
+
+test_logs/
+.qoder/

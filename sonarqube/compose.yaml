@@ -36,6 +36,10 @@ services:
     security_opt:
       - no-new-privileges:true
     read_only: true
+    tmpfs:
+      - /tmp
+      - /opt/sonarqube/temp
+      - /var/log
     depends_on:
       sonar_db:
         condition: service_healthy
