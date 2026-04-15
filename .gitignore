@@ -58,5 +58,17 @@ postgresql/backups/*
 postgresql/logs/*
 !postgresql/logs/.gitkeep
 
+# Ignore MySQL data, logs, and backups
+mysql/backups/*
+!mysql/backups/.gitkeep
+mysql/logs/*
+!mysql/logs/.gitkeep
+
+# Ignore MongoDB data, logs, and backups
+mongodb/backups/*
+!mongodb/backups/.gitkeep
+mongodb/logs/*
+!mongodb/logs/.gitkeep
+
 test_logs/
 .qoder/

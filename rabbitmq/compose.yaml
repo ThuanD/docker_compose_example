@@ -44,7 +44,7 @@ services:
         compress: "true"
 
   rabbitmq-exporter:
-    image: ${RABBITMQ_EXPORTER_IMAGE:-kbudde/rabbitmq-exporter:latest}
+    image: ${RABBITMQ_EXPORTER_IMAGE:-kbudde/rabbitmq-exporter:v1.0.0-RC19}
     container_name: ${RABBITMQ_EXPORTER_CONTAINER_NAME:-rabbitmq-exporter}
     environment:
       - RABBIT_URL=http://rabbitmq:15672

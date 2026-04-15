@@ -1,6 +1,6 @@
 services:
   nginx:
-    image: ${NGINX_IMAGE:-nginx:alpine}
+    image: ${NGINX_IMAGE:-nginx:1.25-alpine}
     container_name: ${NGINX_CONTAINER_NAME:-nginx}
     ports:
       - "${NGINX_HTTP_PORT:-80}:80"
@@ -38,7 +38,7 @@ services:
         compress: "true"
 
   certbot:
-    image: ${CERTBOT_IMAGE:-certbot/certbot:latest}
+    image: ${CERTBOT_IMAGE:-certbot/certbot:v2.9.0}
     container_name: ${CERTBOT_CONTAINER_NAME:-certbot}
     volumes:
       - ./certbot/conf:/etc/letsencrypt

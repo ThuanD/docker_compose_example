@@ -1,14 +1,13 @@
 services:
   minio:
-    image: ${MINIO_IMAGE:-minio/minio:latest}
+    image: ${MINIO_IMAGE:-minio/minio:RELEASE.2024-01-16T16-07-38Z}
     container_name: ${MINIO_CONTAINER_NAME:-minio}
     environment:
       - MINIO_ROOT_USER=${MINIO_ROOT_USER:-minioadmin}
-      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD:-minioadmin123}
+      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD:?MINIO_ROOT_PASSWORD is required}
       - MINIO_BROWSER_REDIRECT_URL=${MINIO_BROWSER_REDIRECT_URL:-http://localhost:9001}
     volumes:
       - minio_data:/data
-      - ./config:/root/.minio
     ports:
       - "${MINIO_API_PORT:-9000}:9000"      # S3 API
       - "${MINIO_CONSOLE_PORT:-9001}:9001"   # Web Console
@@ -41,14 +40,11 @@ services:
         compress: "true"
 
   minio-client:
-    image: ${MINIO_CLIENT_IMAGE:-minio/mc:latest}
+    image: ${MINIO_CLIENT_IMAGE:-minio/mc:RELEASE.2024-01-16T16-06-34Z}
     container_name: ${MINIO_CLIENT_CONTAINER_NAME:-minio-client}
     environment:
       - MINIO_ROOT_USER=${MINIO_ROOT_USER:-minioadmin}
-      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD:-minioadmin123}
-    volumes:
-      - ./scripts:/scripts:ro
-      - ./data:/data
+      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD:?MINIO_ROOT_PASSWORD is required}
     networks:
       - minio_network
     depends_on:
@@ -60,9 +56,9 @@ services:
       /usr/bin/mc mb myminio/uploads --ignore-existing;
       /usr/bin/mc mb myminio/backups --ignore-existing;
       /usr/bin/mc mb myminio/documents --ignore-existing;
-      /usr/bin/mc policy set public myminio/uploads;
-      /usr/bin/mc policy set private myminio/backups;
-      /usr/bin/mc policy set private myminio/documents;
+      /usr/bin/mc anonymous set download myminio/uploads;
+      /usr/bin/mc anonymous set none myminio/backups;
+      /usr/bin/mc anonymous set none myminio/documents;
       exit 0;
       "
     deploy:

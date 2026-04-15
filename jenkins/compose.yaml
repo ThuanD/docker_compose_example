@@ -1,13 +1,19 @@
 services:
   jenkins:
-    image: ${JENKINS_IMAGE:-jenkins/jenkins:lts}
+    image: ${JENKINS_IMAGE:-jenkins/jenkins:2.426.3-lts}
     container_name: ${JENKINS_CONTAINER_NAME:-jenkins}
     environment:
-      - JENKINS_OPTS="--prefix=${JENKINS_PREFIX:-/}"
-      - JENKINS_JAVA_OPTS=${JENKINS_JAVA_OPTS:--Xms512m -Xmx1024m -Duser.timezone=UTC}
+      - JENKINS_OPTS=--prefix=${JENKINS_PREFIX:-/}
+      - JAVA_OPTS=${JENKINS_JAVA_OPTS:--Xms512m -Xmx1024m -Duser.timezone=UTC}
     volumes:
       - jenkins_home:/var/jenkins_home
-      - /var/run/docker.sock:/var/run/docker.sock
+      # WARNING: Docker socket mount is disabled for security reasons.
+      # To enable Docker-in-Docker, consider using:
+      # 1. Jenkins Docker Agent (recommended)
+      # 2. Docker-in-Docker (dind) with proper security
+      # 3. Kaniko for building container images
+      # Uncomment the line below ONLY if you understand the security implications:
+      # - /var/run/docker.sock:/var/run/docker.sock
     ports:
       - "${JENKINS_PORT:-8080}:8080"
       - "${JENKINS_AGENT_PORT:-50000}:50000"

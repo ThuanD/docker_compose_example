@@ -1,6 +1,6 @@
 services:
   sonarqube:
-    image: ${SONARQUBE_IMAGE:-sonarqube:lts-community}
+    image: ${SONARQUBE_IMAGE:-sonarqube:10.4.1-community}
     container_name: ${SONARQUBE_CONTAINER_NAME:-sonarqube}
     labels:
       com.example.description: "SonarQube service"
@@ -9,7 +9,7 @@ services:
     environment:
       - SONAR_JDBC_URL=${SONAR_JDBC_URL:-jdbc:postgresql://sonar_db:5432/sonar}
       - SONAR_JDBC_USERNAME=${SONAR_JDBC_USERNAME:-sonar}
-      - SONAR_JDBC_PASSWORD=${SONAR_JDBC_PASSWORD:-sonar}
+      - SONAR_JDBC_PASSWORD=${SONAR_JDBC_PASSWORD:?SONAR_JDBC_PASSWORD is required}
     volumes:
       - sonarqube_conf:/opt/sonarqube/conf
       - sonarqube_data:/opt/sonarqube/data
@@ -58,11 +58,11 @@ services:
         compress: "true"
 
   sonar_db:
-    image: ${SONAR_DB_IMAGE:-postgres:13}
+    image: ${SONAR_DB_IMAGE:-postgres:15.5-alpine}
     container_name: ${SONAR_DB_CONTAINER_NAME:-sonar_db}
     environment:
       - POSTGRES_USER=${POSTGRES_USER:-sonar}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-sonar}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
       - POSTGRES_DB=${POSTGRES_DB:-sonar}
     volumes:
       - sonar_db_data:/var/lib/postgresql/data
@@ -98,9 +98,3 @@ volumes:
   sonarqube_logs:
   sonarqube_temp:
   sonar_db_data:
-  backup:
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: /tmp/backup

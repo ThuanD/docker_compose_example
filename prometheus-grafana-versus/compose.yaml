@@ -1,6 +1,6 @@
 services:
   prometheus:
-    image: ${PROMETHEUS_IMAGE:-prom/prometheus:latest}
+    image: ${PROMETHEUS_IMAGE:-prom/prometheus:v2.48.1}
     container_name: ${PROMETHEUS_CONTAINER_NAME:-prometheus}
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
@@ -11,10 +11,20 @@ services:
       - ${PROMETHEUS_PORT:-9090}:9090
     networks:
       - monitoring-network
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
     restart: unless-stopped
     security_opt:
       - no-new-privileges:true
     read_only: true
+    tmpfs:
+      - /tmp
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "http://localhost:9090/-/healthy"]
       interval: 15s
@@ -29,14 +39,14 @@ services:
         compress: "true"
 
   grafana:
-    image: ${GRAFANA_IMAGE:-grafana/grafana:latest}
+    image: ${GRAFANA_IMAGE:-grafana/grafana:10.2.4}
     container_name: ${GRAFANA_CONTAINER_NAME:-grafana}
     environment:
       - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER:-admin}
       - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-grafana}
       - GF_INSTALL_PLUGINS=${GRAFANA_PLUGINS:-}
     volumes:
-      - ./grafana:/etc/grafana/provisioning/datasources
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
       - grafana_data:/var/lib/grafana
     ports:
       - ${GRAFANA_PORT:-3000}:3000
@@ -46,9 +56,19 @@ services:
     security_opt:
       - no-new-privileges:true
     read_only: true
+    tmpfs:
+      - /tmp
     depends_on:
       prometheus:
         condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "http://localhost:3000/api/health"]
@@ -64,7 +84,7 @@ services:
         compress: "true"
 
   versus:
-    image: ${VERSUS_IMAGE:-ghcr.io/versuscontrol/versus-incident:latest}
+    image: ${VERSUS_IMAGE:-ghcr.io/versuscontrol/versus-incident:v1.0.0}
     container_name: ${VERSUS_CONTAINER_NAME:-versus}
     environment:
       - SLACK_TOKEN=${SLACK_TOKEN}
@@ -79,8 +99,18 @@ services:
     ports:
       - ${VERSUS_PORT:-8080}:8080
     depends_on:
-      - prometheus
-      - grafana
+      prometheus:
+        condition: service_healthy
+      grafana:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+        reservations:
+          cpus: '0.25'
+          memory: 128M
     restart: unless-stopped
     security_opt:
       - no-new-privileges:true
@@ -109,9 +139,3 @@ volumes:
     driver: local
   grafana_data:
     driver: local
-  backup:
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: /tmp/backup

@@ -48,12 +48,11 @@ services:
     image: ${LOGSTASH_IMAGE:-logstash:8.17.3}
     container_name: ${LOGSTASH_CONTAINER_NAME:-log}
     environment:
-      - discovery.seed_hosts=logstash
       - LS_JAVA_OPTS=${LS_JAVA_OPTS:--Xms512m -Xmx512m}
     volumes:
-      - ./logstash/pipeline:/usr/share/logstash/pipeline
-      - ./logstash/data:/usr/share/logstash/data
-      - ./logstash/nginx.log:/home/nginx.log
+      - ./logstash/pipeline:/usr/share/logstash/pipeline:ro
+      - logstash_data:/usr/share/logstash/data
+      - ./logstash/nginx.log:/home/nginx.log:ro
     ports:
       - "${LOGSTASH_TCP_PORT:-5000}:5000/tcp"
       - "${LOGSTASH_UDP_PORT:-5000}:5000/udp"
@@ -70,7 +69,8 @@ services:
           cpus: '0.5'
           memory: 512M
     depends_on:
-      - elasticsearch
+      elasticsearch:
+        condition: service_healthy
     command: logstash -f /usr/share/logstash/pipeline/logstash-nginx.config
     restart: unless-stopped
     healthcheck:
@@ -106,7 +106,8 @@ services:
           cpus: '0.25'
           memory: 512M
     depends_on:
-      - elasticsearch
+      elasticsearch:
+        condition: service_healthy
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "curl --silent --fail localhost:5601/api/status || exit 1"]
@@ -128,9 +129,4 @@ networks:
 volumes:
   elasticsearch_data:
   kibana_data:
-  backup:
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: /tmp/backup
+  logstash_data:

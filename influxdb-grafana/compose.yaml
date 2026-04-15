@@ -5,10 +5,10 @@ services:
     environment:
       - DOCKER_INFLUXDB_INIT_MODE=setup
       - DOCKER_INFLUXDB_INIT_USERNAME=${INFLUXDB_USERNAME:-admin}
-      - DOCKER_INFLUXDB_INIT_PASSWORD=${INFLUXDB_PASSWORD:-password123}
+      - DOCKER_INFLUXDB_INIT_PASSWORD=${INFLUXDB_PASSWORD:?INFLUXDB_PASSWORD is required}
       - DOCKER_INFLUXDB_INIT_ORG=${INFLUXDB_ORG:-myorg}
       - DOCKER_INFLUXDB_INIT_BUCKET=${INFLUXDB_BUCKET:-mybucket}
-      - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=${INFLUXDB_TOKEN:-mytoken123456}
+      - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=${INFLUXDB_TOKEN:?INFLUXDB_TOKEN is required}
     volumes:
       - influxdb_data:/var/lib/influxdb2
       - influxdb_config:/etc/influxdb2
@@ -42,12 +42,15 @@ services:
         compress: "true"
 
   grafana:
-    image: ${GRAFANA_IMAGE:-grafana/grafana:latest}
+    image: ${GRAFANA_IMAGE:-grafana/grafana:10.2.4}
     container_name: ${GRAFANA_CONTAINER_NAME:-influx-grafana}
     environment:
       - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER:-admin}
-      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:?GRAFANA_ADMIN_PASSWORD is required}
       - GF_INSTALL_PLUGINS=${GRAFANA_PLUGINS:-}
+      - INFLUXDB_ORG=${INFLUXDB_ORG:-myorg}
+      - INFLUXDB_BUCKET=${INFLUXDB_BUCKET:-mybucket}
+      - INFLUXDB_TOKEN=${INFLUXDB_TOKEN}
     volumes:
       - grafana_data:/var/lib/grafana
       - ./grafana/provisioning:/etc/grafana/provisioning:ro
@@ -84,12 +87,15 @@ services:
         compress: "true"
 
   telegraf:
-    image: ${TELEGRAF_IMAGE:-telegraf:latest}
+    image: ${TELEGRAF_IMAGE:-telegraf:1.29-alpine}
     container_name: ${TELEGRAF_CONTAINER_NAME:-telegraf}
     environment:
-      - INFLUX_TOKEN=${INFLUXDB_TOKEN:-mytoken123456}
+      - INFLUX_TOKEN=${INFLUXDB_TOKEN:?INFLUXDB_TOKEN is required}
       - INFLUX_ORG=${INFLUXDB_ORG:-myorg}
       - INFLUX_BUCKET=${INFLUXDB_BUCKET:-mybucket}
+      - HOST_PROC=/host/proc
+      - HOST_SYS=/host/sys
+      - HOST_MOUNT_PREFIX=/host
     volumes:
       - ./telegraf/telegraf.conf:/etc/telegraf/telegraf.conf:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
