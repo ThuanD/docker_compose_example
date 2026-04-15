@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<!-- Safe defaults overlay for the `default` profile. -->
+<clickhouse>
+    <profiles>
+        <default>
+            <max_memory_usage>2000000000</max_memory_usage>
+            <use_uncompressed_cache>0</use_uncompressed_cache>
+            <load_balancing>random</load_balancing>
+            <readonly>0</readonly>
+        </default>
+    </profiles>
+</clickhouse>

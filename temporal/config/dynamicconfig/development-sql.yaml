@@ -1,0 +1,20 @@
+# Temporal dynamic config for development with SQL persistence.
+# Keep retention short in dev so visibility tables don't grow.
+frontend.enableClientVersionCheck:
+  - value: true
+    constraints: {}
+history.persistenceMaxQPS:
+  - value: 3000
+    constraints: {}
+frontend.persistenceMaxQPS:
+  - value: 3000
+    constraints: {}
+system.advancedVisibilityWritingMode:
+  - value: "off"
+    constraints: {}
+system.enableReadVisibilityFromES:
+  - value: false
+    constraints: {}
+limit.maxIDLength:
+  - value: 255
+    constraints: {}

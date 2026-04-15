@@ -1,0 +1,52 @@
+services:
+  meilisearch:
+    image: ${MEILISEARCH_IMAGE:-getmeili/meilisearch:v1.6}
+    container_name: ${MEILISEARCH_CONTAINER_NAME:-meilisearch}
+    environment:
+      - MEILI_MASTER_KEY=${MEILI_MASTER_KEY:?MEILI_MASTER_KEY is required}
+      - MEILI_ENV=${MEILI_ENV:-production}
+      - MEILI_NO_ANALYTICS=true
+      - MEILI_DB_PATH=/meili_data
+      - MEILI_DUMP_DIR=/meili_dumps
+      - MEILI_LOG_LEVEL=${MEILI_LOG_LEVEL:-INFO}
+      - MEILI_MAX_INDEXING_MEMORY=${MEILI_MAX_INDEXING_MEMORY:-1Gb}
+    volumes:
+      - meili_data:/meili_data
+      - meili_dumps:/meili_dumps
+    ports:
+      - "${MEILISEARCH_PORT:-7700}:7700"
+    networks:
+      - meilisearch_network
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:7700/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+        compress: "true"
+
+networks:
+  meilisearch_network:
+    driver: bridge
+
+volumes:
+  meili_data:
+    driver: local
+  meili_dumps:
+    driver: local

@@ -1,0 +1,128 @@
+services:
+  postgres:
+    image: ${POSTGRES_IMAGE:-postgres:15.5-alpine}
+    container_name: ${POSTGRES_CONTAINER_NAME:-temporal-postgres}
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:-temporal}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      - POSTGRES_DB=temporal
+    volumes:
+      - temporal_postgres_data:/var/lib/postgresql/data
+    networks:
+      - temporal_network
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.1'
+          memory: 128M
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-temporal}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+        compress: "true"
+
+  temporal:
+    image: ${TEMPORAL_IMAGE:-temporalio/auto-setup:1.22.5}
+    container_name: ${TEMPORAL_CONTAINER_NAME:-temporal}
+    environment:
+      - DB=postgres12
+      - DB_PORT=5432
+      - POSTGRES_USER=${POSTGRES_USER:-temporal}
+      - POSTGRES_PWD=${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      - POSTGRES_SEEDS=postgres
+      - DYNAMIC_CONFIG_FILE_PATH=config/dynamicconfig/development-sql.yaml
+    volumes:
+      - ./config/dynamicconfig:/etc/temporal/config/dynamicconfig:ro
+    ports:
+      - "${TEMPORAL_GRPC_PORT:-7233}:7233"
+    networks:
+      - temporal_network
+      - public_network
+    depends_on:
+      postgres:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "tctl --address temporal:7233 cluster health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+        compress: "true"
+
+  temporal-ui:
+    image: ${TEMPORAL_UI_IMAGE:-temporalio/ui:2.22.3}
+    container_name: ${TEMPORAL_UI_CONTAINER_NAME:-temporal-ui}
+    environment:
+      - TEMPORAL_ADDRESS=temporal:7233
+      - TEMPORAL_CORS_ORIGINS=http://localhost:${TEMPORAL_UI_PORT:-8080}
+    ports:
+      - "${TEMPORAL_UI_PORT:-8080}:8080"
+    networks:
+      - temporal_network
+      - public_network
+    depends_on:
+      temporal:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 256M
+        reservations:
+          cpus: '0.05'
+          memory: 64M
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8080 || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+        compress: "true"
+
+networks:
+  temporal_network:
+    driver: bridge
+    internal: true
+  public_network:
+    driver: bridge
+
+volumes:
+  temporal_postgres_data:
+    driver: local

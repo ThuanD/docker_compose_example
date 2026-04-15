@@ -24,27 +24,42 @@ The goal of this repository is to offer practical and easy-to-follow guidance fo
 
 Currently, the repository includes examples for the following tech stacks:
 
-### **Databases**
+### **Relational Databases**
 * **[PostgreSQL with PgAdmin](postgresql/)**: Complete PostgreSQL database setup with PgAdmin web interface and automated backup functionality.
-* **[MongoDB with Mongo Express](mongodb/)**: NoSQL document database with web-based admin interface and automated backup.
 * **[MySQL with phpMyAdmin](mysql/)**: Popular relational database with web interface and backup automation.
+* **[TimescaleDB](timescaledb/)**: PostgreSQL extension for time-series data with hypertables and built-in tuning profiles.
 
-### **Message Queues & Streaming**
+### **NoSQL & Specialized Databases**
+* **[MongoDB with Mongo Express](mongodb/)**: NoSQL document database with web-based admin interface and automated backup.
+* **[ClickHouse](clickhouse/)**: Columnar OLAP database for analytics and large-scale aggregations.
+* **[Qdrant](qdrant/)**: High-performance vector search engine for embeddings, RAG, and semantic search.
+* **[Meilisearch](meilisearch/)**: Lightweight, typo-tolerant full-text search engine with zero-config defaults.
+
+### **Message Queues, Streaming & Workers**
 * **[Apache Kafka](kafka/)**: Kafka messaging system with Zookeeper and Kafka UI for stream processing and real-time data pipelines.
 * **[RabbitMQ with Management UI](rabbitmq/)**: Message broker with management interface and Prometheus metrics export.
+* **[Celery + Redis + Beat + Flower](celery/)**: Distributed task queue showcasing worker replicas, a beat scheduler, and Flower monitoring UI.
+* **[Temporal](temporal/)**: Durable workflow engine with PostgreSQL persistence and Web UI.
 
 ### **Caching & Storage**
 * **[Redis Cluster](redis-cluster/)**: Example setup for a Redis Cluster, demonstrating how to configure and manage a distributed Redis environment for high availability and scalability.
 * **[Minio S3 Object Storage](minio/)**: S3-compatible object storage with web console and bucket management.
 
+### **Cloud Emulation (Local Dev Parity)**
+* **[Azurite](azurite/)**: Microsoft's official Azure Storage emulator for Blob/Queue/Table during local development.
+* **[LocalStack](localstack/)**: AWS cloud emulator (S3/SQS/SNS/DynamoDB/Lambda/SES/...) for local dev and testing.
+
 ### **Monitoring & Observability**
 * **[Prometheus, Grafana and Versus](prometheus-grafana-versus/)**: Monitoring stack with Prometheus for metrics collection, Grafana for visualization, and Versus for incident management.
 * **[InfluxDB + Grafana + Telegraf](influxdb-grafana/)**: Time series database stack for IoT and metrics data with data collection agent.
 * **[ELK Stack](elasticsearch-logstash-kibana/)**: Elasticsearch, Logstash, and Kibana for centralized logging, log processing, and data visualization.
+* **[Loki + Promtail + Grafana](loki/)**: Lightweight log aggregation pipeline — label-based indexing, much cheaper than ELK.
+* **[Jaeger + OpenTelemetry Collector](jaeger/)**: Distributed tracing with OTLP ingestion via the OpenTelemetry Collector.
 
 ### **Development & CI/CD**
 * **[SonarQube and PostgreSQL](sonarqube/)**: SonarQube setup with PostgreSQL for code analysis and quality management.
 * **[Jenkins CI/CD](jenkins/)**: Jenkins setup for continuous integration and continuous deployment pipelines.
+* **[Mailpit](mailpit/)**: SMTP capture server for local email testing — any app sending mail goes here instead of the real inbox.
 
 ### **Web & Content Management**
 * **[WordPress with MySQL](wordpress/)**: Complete WordPress CMS setup with MySQL database and phpMyAdmin interface.
@@ -53,8 +68,10 @@ Currently, the repository includes examples for the following tech stacks:
 ### **Reverse Proxy & Load Balancing**
 * **[Traefik Reverse Proxy](traefik/)**: Modern reverse proxy with automatic service discovery, SSL termination, and dashboard.
 
-### **Identity & Access Management**
+### **Identity, Secrets & Automation**
 * **[Keycloak Identity Management](keycloak/)**: Open-source identity and access management with PostgreSQL backend.
+* **[HashiCorp Vault](vault/)**: Secrets management with file storage backend (auto-unseal guidance for production in the config).
+* **[n8n Workflow Automation](n8n/)**: Low-code workflow automation engine with PostgreSQL persistence and basic-auth UI.
 
 **More tech stacks will be added in the future.** We aim to expand this list to include various programming languages, frameworks, databases, and other popular technologies.
 

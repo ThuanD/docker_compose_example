@@ -1,0 +1,49 @@
+services:
+  localstack:
+    image: ${LOCALSTACK_IMAGE:-localstack/localstack:3.1}
+    container_name: ${LOCALSTACK_CONTAINER_NAME:-localstack}
+    environment:
+      - SERVICES=${LOCALSTACK_SERVICES:-s3,sqs,sns,dynamodb,lambda,ses,secretsmanager}
+      - DEBUG=${LOCALSTACK_DEBUG:-0}
+      - PERSISTENCE=${LOCALSTACK_PERSISTENCE:-1}
+      - DOCKER_HOST=unix:///var/run/docker.sock
+      # Pro features require LOCALSTACK_AUTH_TOKEN; leave blank for community edition
+      - LOCALSTACK_AUTH_TOKEN=${LOCALSTACK_AUTH_TOKEN:-}
+    volumes:
+      - localstack_data:/var/lib/localstack
+      # localstack spawns Lambda containers via Docker socket - this is intentional
+      - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+      - "${LOCALSTACK_EDGE_PORT:-4566}:4566"
+      - "${LOCALSTACK_EXTERNAL_PORT_START:-4510}-${LOCALSTACK_EXTERNAL_PORT_END:-4559}:4510-4559"
+    networks:
+      - localstack_network
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:4566/_localstack/health | grep -q running"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+        compress: "true"
+
+networks:
+  localstack_network:
+    driver: bridge
+
+volumes:
+  localstack_data:
+    driver: local

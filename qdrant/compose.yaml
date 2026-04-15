@@ -1,0 +1,51 @@
+services:
+  qdrant:
+    image: ${QDRANT_IMAGE:-qdrant/qdrant:v1.7.4}
+    container_name: ${QDRANT_CONTAINER_NAME:-qdrant}
+    environment:
+      - QDRANT__SERVICE__API_KEY=${QDRANT_API_KEY:?QDRANT_API_KEY is required}
+      - QDRANT__SERVICE__READ_ONLY_API_KEY=${QDRANT_READ_ONLY_API_KEY:-}
+      - QDRANT__LOG_LEVEL=${QDRANT_LOG_LEVEL:-INFO}
+      - QDRANT__TELEMETRY_DISABLED=true
+    volumes:
+      - qdrant_data:/qdrant/storage
+      - qdrant_snapshots:/qdrant/snapshots
+    ports:
+      - "${QDRANT_HTTP_PORT:-6333}:6333"
+      - "${QDRANT_GRPC_PORT:-6334}:6334"
+    networks:
+      - qdrant_network
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    restart: unless-stopped
+    healthcheck:
+      # Qdrant does not ship with wget/curl in its image; use the /healthz endpoint via bash/tcp
+      test: ["CMD-SHELL", "bash -c ':> /dev/tcp/127.0.0.1/6333' || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+        compress: "true"
+
+networks:
+  qdrant_network:
+    driver: bridge
+
+volumes:
+  qdrant_data:
+    driver: local
+  qdrant_snapshots:
+    driver: local

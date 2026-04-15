@@ -1,0 +1,79 @@
+services:
+  jaeger:
+    image: ${JAEGER_IMAGE:-jaegertracing/all-in-one:1.54}
+    container_name: ${JAEGER_CONTAINER_NAME:-jaeger}
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+      - SPAN_STORAGE_TYPE=${JAEGER_STORAGE:-memory}
+      - METRICS_STORAGE_TYPE=prometheus
+    ports:
+      - "${JAEGER_UI_PORT:-16686}:16686"           # Web UI
+      - "${JAEGER_COLLECTOR_HTTP_PORT:-14268}:14268" # jaeger.thrift over HTTP
+      - "${JAEGER_COLLECTOR_GRPC_PORT:-14250}:14250" # gRPC from agent
+    networks:
+      - tracing_network
+      - public_network
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:14269/ || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+        compress: "true"
+
+  otel-collector:
+    image: ${OTEL_COLLECTOR_IMAGE:-otel/opentelemetry-collector-contrib:0.93.0}
+    container_name: ${OTEL_COLLECTOR_CONTAINER_NAME:-otel-collector}
+    command: ["--config=/etc/otel-collector/config.yaml"]
+    volumes:
+      - ./config/otel-collector.yaml:/etc/otel-collector/config.yaml:ro
+    ports:
+      - "${OTEL_GRPC_PORT:-4317}:4317"   # OTLP gRPC receiver
+      - "${OTEL_HTTP_PORT:-4318}:4318"   # OTLP HTTP receiver
+      - "${OTEL_METRICS_PORT:-8888}:8888" # collector's own metrics
+    networks:
+      - tracing_network
+      - public_network
+    depends_on:
+      jaeger:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.1'
+          memory: 128M
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+        compress: "true"
+
+networks:
+  tracing_network:
+    driver: bridge
+    internal: true
+  public_network:
+    driver: bridge

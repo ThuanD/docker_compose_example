@@ -1,0 +1,52 @@
+services:
+  azurite:
+    image: ${AZURITE_IMAGE:-mcr.microsoft.com/azure-storage/azurite:3.29.0}
+    container_name: ${AZURITE_CONTAINER_NAME:-azurite}
+    # Bind listeners to 0.0.0.0 and enable loose mode for dev parity
+    command: >
+      azurite
+      --blobHost 0.0.0.0 --blobPort 10000
+      --queueHost 0.0.0.0 --queuePort 10001
+      --tableHost 0.0.0.0 --tablePort 10002
+      --location /data
+      --debug /data/debug.log
+      --loose --skipApiVersionCheck
+    volumes:
+      - azurite_data:/data
+    ports:
+      - "${AZURITE_BLOB_PORT:-10000}:10000"
+      - "${AZURITE_QUEUE_PORT:-10001}:10001"
+      - "${AZURITE_TABLE_PORT:-10002}:10002"
+    networks:
+      - azurite_network
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.1'
+          memory: 128M
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z localhost 10000 || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+        compress: "true"
+
+networks:
+  azurite_network:
+    driver: bridge
+
+volumes:
+  azurite_data:
+    driver: local
